@@ -1,0 +1,42 @@
+{
+  "name": "rxflow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest --coverage --watch",
+    "lint": "prettier --print-width 120 --single-quote --trailing-comma es5 --write \"src/**/*.ts\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cinergix/rxflow.git"
+  },
+  "keywords": [],
+  "author": "Muhammed Thanish <mnmtanish@gmail.com> (http://thanish.me/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cinergix/rxflow/issues"
+  },
+  "homepage": "https://github.com/cinergix/rxflow#readme",
+  "peerDependencies": {
+    "rxjs": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^20.0.0",
+    "jest": "^20.0.0",
+    "prettier": "^1.5.3",
+    "rxjs": "^5.0.0",
+    "ts-jest": "^20.0.0",
+    "typescript": "^2.0.0"
+  },
+  "jest": {
+    "transform": {
+      ".ts": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "\\.spec\\.ts$",
+    "moduleFileExtensions": [
+      "ts", "js"
+    ],
+    "mapCoverage": true
+  }
+}
