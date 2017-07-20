@@ -43,7 +43,7 @@ describe('rxflow', () => {
       it('should emit events in S1,E1,N1,S2,E2,N2 order', async () => {
         const val = [Math.random(), Math.random()];
         const ob1 = Observable.of(val[0]);
-        const ob2 = Observable.of(val[1]).delay(TEST_BATCH_TIMEOUT+10);
+        const ob2 = Observable.of(val[1]).delay(TEST_BATCH_TIMEOUT + 10);
         const out = await batchAndGetResult(ob1.concat(ob2));
         expect(out).toEqual([
           { type: 'start', event: val[0] },
@@ -60,7 +60,7 @@ describe('rxflow', () => {
       it('should emit events in S1,E1,E2,N2,S3,E3,E4,N4 order', async () => {
         const val = [Math.random(), Math.random(), Math.random(), Math.random()];
         const ob1 = Observable.from(val.slice(0, 2));
-        const ob2 = Observable.from(val.slice(2)).delay(TEST_BATCH_TIMEOUT+10);
+        const ob2 = Observable.from(val.slice(2)).delay(TEST_BATCH_TIMEOUT + 10);
         const out = await batchAndGetResult(ob1.concat(ob2));
         expect(out).toEqual([
           { type: 'start', event: val[0] },
