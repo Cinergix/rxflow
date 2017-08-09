@@ -1,56 +1,58 @@
-import { Subject } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 
 export type OrderTest<T> = (a: T, b: T) => boolean;
 
-export class OrderedSubject<T> extends Subject<T> {
-  private queue: T[] = [];
-  private prevs: T;
+export function order<T>(test: OrderTest<T>, input: Observable<T>): Observable<T> {
+  return Observable.create((subscriber: Subscriber<T>) => {
+    let queue: T[] = [];
+    let prevs: T;
 
-  constructor(private test: OrderTest<T>) {
-    super();
-  }
-
-  next(value: T) {
-    if (this.prevs === undefined) {
-      this.emit(value);
-    } else if (this.test(this.prevs, value)) {
-      this.emit(value);
-      this.process();
-    } else {
-      this.enqueue(value);
-    }
-  }
-
-  emit(value: T) {
-    this.prevs = value;
-    super.next(value);
-  }
-
-  process() {
-    while (this.queue.length) {
-      let emitted = false;
-      this.queue.forEach(v => {
-        if (this.test(this.prevs, v)) {
-          emitted = true;
-          this.emit(v);
-        }
-      });
-      if (!emitted) {
-        break;
+    function next(value: T) {
+      if (prevs === undefined) {
+        emit(value);
+      } else if (test(prevs, value)) {
+        emit(value);
+        process();
+      } else {
+        enqueue(value);
       }
     }
-  }
 
-  enqueue(value: T) {
-    let pos = this.queue.findIndex(v => this.test(value, v));
-    if (pos === -1) {
-      pos = this.queue.findIndex(v => this.test(v, value));
-      pos = pos === -1 ? this.queue.length : pos + 1;
+    function emit(value: T) {
+      prevs = value;
+      subscriber.next(value);
     }
-    this.queue.splice(pos, 0, value);
-  }
-}
 
-export function order<T>(test: OrderTest<T>): OrderedSubject<T> {
-  return new OrderedSubject<T>(test);
+    function process() {
+      while (queue.length) {
+        let emitted = false;
+        queue.forEach(v => {
+          if (test(prevs, v)) {
+            emitted = true;
+            emit(v);
+          }
+        });
+        if (!emitted) {
+          break;
+        }
+      }
+    }
+
+    function enqueue(value: T) {
+      let pos = queue.findIndex(v => test(value, v));
+      if (pos === -1) {
+        pos = queue.findIndex(v => test(v, value));
+        pos = pos === -1 ? queue.length : pos + 1;
+      }
+      queue.splice(pos, 0, value);
+    }
+
+    const sub = input.subscribe({
+      next: val => next(val),
+      error: err => subscriber.error(err),
+      complete: () => subscriber.complete(),
+    });
+
+    return () => sub.unsubscribe();
+  });
 }
