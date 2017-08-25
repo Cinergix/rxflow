@@ -1,6 +1,4 @@
-export function add(x: number, y: number = 0) {
-  if (x === 2) {
-    return y + x;
-  }
-  return x + y;
-}
+export { batch } from './batch';
+export { callp } from './callp';
+export { calls } from './calls';
+export { order } from './order';
