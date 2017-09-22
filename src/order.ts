@@ -2,10 +2,14 @@ import { Observable, Subscriber } from 'rxjs';
 
 export type OrderTest<T> = (a: T, b: T) => boolean;
 
-export function order<T>(test: OrderTest<T>, input: Observable<T>): Observable<T> {
+export function order<T>(test: OrderTest<T>, input: Observable<T>, initial?: T): Observable<T> {
   return Observable.create((subscriber: Subscriber<T>) => {
     let queue: T[] = [];
     let prevs: T;
+
+    if (initial) {
+      prevs = initial;
+    }
 
     function next(value: T) {
       if (prevs === undefined) {

@@ -2,11 +2,11 @@ import { Subject } from 'rxjs';
 import { order, OrderTest } from '../order';
 
 describe('order', () => {
-  function createTestSubject<T>(test: OrderTest<T>, complete: Function = () => null) {
+  function createTestSubject<T>(test: OrderTest<T>, complete: Function = () => null, initial?: T) {
     const input = new Subject<T>();
     const res: T[] = [];
     const err: Error[] = [];
-    const sub = order(test, input).subscribe(v => res.push(v), e => err.push(e), () => complete());
+    const sub = order(test, input, initial).subscribe(v => res.push(v), e => err.push(e), () => complete());
     return { input, res, err, sub };
   }
 
@@ -14,6 +14,18 @@ describe('order', () => {
     const { input, res } = createTestSubject(() => false);
     input.next(100);
     expect(res).toEqual([100]);
+  });
+
+  it('should emit first value with initial value if test returns true', () => {
+    const { input, res } = createTestSubject(() => true, () => {}, 100);
+    input.next(200);
+    expect(res).toEqual([200]);
+  });
+
+  it('should not emit first value with initial value if test returns false', () => {
+    const { input, res } = createTestSubject(() => false, () => {}, 100);
+    input.next(200);
+    expect(res).toEqual([]);
   });
 
   it('should emit first value without running order function', () => {
