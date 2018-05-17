@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs';
+import { Observable, from, concat, of } from 'rxjs';
+import { delay, toArray } from 'rxjs/operators';
 import { batch } from '../batch';
 
 describe('batch', () => {
@@ -13,17 +14,19 @@ describe('batch', () => {
       return group;
     });
     const observable = values
-      .map((group, idx) => Observable.from(group).delay(idx * TEST_BATCH_TIMEOUT + 10))
-      .reduce((merged, obs) => merged.concat(obs));
+      .map((group, idx) => from(group).pipe(delay(idx * TEST_BATCH_TIMEOUT + 10)))
+      .reduce((merged, obs) => concat(merged, obs));
     return [values, observable];
   }
 
   function batchAndGetResult(input: Observable<any>) {
-    return batch(TEST_BATCH_TIMEOUT, input).toArray().toPromise();
+    return batch(input, TEST_BATCH_TIMEOUT)
+      .pipe(toArray())
+      .toPromise();
   }
 
   it('should return an observables', () => {
-    const out = batch(TEST_BATCH_TIMEOUT, Observable.of(null));
+    const out = batch(of(null), TEST_BATCH_TIMEOUT);
     expect(out instanceof Observable).toBe(true);
   });
 
@@ -32,9 +35,9 @@ describe('batch', () => {
       const [values, observable] = createTestObservables(1);
       const out = await batchAndGetResult(observable);
       expect(out).toEqual([
-        { type: 'start', event: values[0][0] },
-        { type: 'event', event: values[0][0] },
-        { type: 'end', event: values[0][0] },
+        { type: 'start', data: values[0][0] },
+        { type: 'data', data: values[0][0] },
+        { type: 'end', data: values[0][0] },
       ]);
     });
   });
@@ -44,10 +47,10 @@ describe('batch', () => {
       const [values, observable] = createTestObservables(2);
       const out = await batchAndGetResult(observable);
       expect(out).toEqual([
-        { type: 'start', event: values[0][0] },
-        { type: 'event', event: values[0][0] },
-        { type: 'event', event: values[0][1] },
-        { type: 'end', event: values[0][1] },
+        { type: 'start', data: values[0][0] },
+        { type: 'data', data: values[0][0] },
+        { type: 'data', data: values[0][1] },
+        { type: 'end', data: values[0][1] },
       ]);
     });
   });
@@ -57,12 +60,12 @@ describe('batch', () => {
       const [values, observable] = createTestObservables(1, 1);
       const out = await batchAndGetResult(observable);
       expect(out).toEqual([
-        { type: 'start', event: values[0][0] },
-        { type: 'event', event: values[0][0] },
-        { type: 'end', event: values[0][0] },
-        { type: 'start', event: values[1][0] },
-        { type: 'event', event: values[1][0] },
-        { type: 'end', event: values[1][0] },
+        { type: 'start', data: values[0][0] },
+        { type: 'data', data: values[0][0] },
+        { type: 'end', data: values[0][0] },
+        { type: 'start', data: values[1][0] },
+        { type: 'data', data: values[1][0] },
+        { type: 'end', data: values[1][0] },
       ]);
     });
   });
@@ -72,14 +75,14 @@ describe('batch', () => {
       const [values, observable] = createTestObservables(2, 2);
       const out = await batchAndGetResult(observable);
       expect(out).toEqual([
-        { type: 'start', event: values[0][0] },
-        { type: 'event', event: values[0][0] },
-        { type: 'event', event: values[0][1] },
-        { type: 'end', event: values[0][1] },
-        { type: 'start', event: values[1][0] },
-        { type: 'event', event: values[1][0] },
-        { type: 'event', event: values[1][1] },
-        { type: 'end', event: values[1][1] },
+        { type: 'start', data: values[0][0] },
+        { type: 'data', data: values[0][0] },
+        { type: 'data', data: values[0][1] },
+        { type: 'end', data: values[0][1] },
+        { type: 'start', data: values[1][0] },
+        { type: 'data', data: values[1][0] },
+        { type: 'data', data: values[1][1] },
+        { type: 'end', data: values[1][1] },
       ]);
     });
   });

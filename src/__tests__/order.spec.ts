@@ -6,7 +6,7 @@ describe('order', () => {
     const input = new Subject<T>();
     const res: T[] = [];
     const err: Error[] = [];
-    const sub = order(test, input, initial).subscribe(v => res.push(v), e => err.push(e), () => complete());
+    const sub = order(input, test, initial).subscribe(v => res.push(v), e => err.push(e), () => complete());
     return { input, res, err, sub };
   }
 
