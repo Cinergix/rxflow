@@ -1,23 +1,40 @@
-import { Observable } from 'rxjs';
+import { Observable, Observer, empty, concat, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
-export function batch<T>(time: number, input: Observable<T>): Observable<{ type: string; event: T }> {
-  let done: boolean = true;
-  return input.switchMap(event => {
-    let obs: Observable<{ type: string; event: T }> = Observable.of();
-    if (done) {
-      done = false;
-      obs = Observable.concat(obs, Observable.of({ type: 'start', event }));
-    }
-    const next = Observable.create((observer: any) => {
-      observer.next({ type: 'event', event });
-      const timeout = setTimeout(() => {
-        done = true;
-        observer.next({ type: 'end', event });
-        observer.complete();
-      }, time);
-      return () => clearTimeout(timeout);
-    });
-    obs = Observable.concat(obs, next);
-    return obs;
-  });
+/**
+ * Batch event types.
+ */
+export type BatchEventType = 'start' | 'data' | 'end';
+
+/**
+ * Observable returned from batch function will emit this type.
+ */
+export type BatchEventData<T> = { type: BatchEventType; data: T };
+
+/**
+ * Groups data emitted from given observable into batches by time.
+ * @param source   The source observable
+ * @param duration Time in milliseconds to wait before ending current batch
+ */
+export function batch<T>(source: Observable<T>, duration: number): Observable<BatchEventData<T>> {
+  let batchStarted = false;
+  return source.pipe(
+    switchMap(data => {
+      let observable: Observable<BatchEventData<T>> = empty();
+      if (!batchStarted) {
+        batchStarted = true;
+        observable = concat(observable, of<BatchEventData<T>>({ type: 'start', data }));
+      }
+      const dataAndEnd = Observable.create((observer: Observer<BatchEventData<T>>) => {
+        observer.next({ type: 'data', data });
+        const timeout = setTimeout(() => {
+          batchStarted = false;
+          observer.next({ type: 'end', data });
+          observer.complete();
+        }, duration);
+        return () => clearTimeout(timeout);
+      });
+      return concat(observable, dataAndEnd);
+    })
+  );
 }

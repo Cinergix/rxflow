@@ -1,12 +1,14 @@
-import { Observable } from 'rxjs';
+import { Observable, empty, concat, defer } from 'rxjs';
+import { ObservableFactory } from './types';
 
-export type CallSStep = (result: any) => Observable<any>;
-
-export function calls(tasks: CallSStep[]): Observable<any> {
-  let promise: Promise<any> = Promise.resolve(null);
-  for (let i = 0; i < tasks.length; i++) {
-    const task = tasks[i];
-    promise = promise.then(result => task(result).toPromise());
+/**
+ * Executes an array of observable returning functions sequentially.
+ * @param tasks An array of functions to execute sequentially
+ */
+export function calls(tasks: ObservableFactory[]): Observable<any> {
+  let combined: Observable<any> = empty();
+  for (const task of tasks) {
+    combined = concat(combined, defer(task));
   }
-  return Observable.fromPromise(promise);
+  return combined;
 }

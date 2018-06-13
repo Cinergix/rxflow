@@ -1,8 +1,14 @@
-import { Observable } from 'rxjs';
+import { Observable, defer, combineLatest } from 'rxjs';
+import { ObservableFactory } from './types';
 
-export type CallPStep = () => Observable<any>;
-
-export function callp(tasks: CallPStep[]): Observable<any[]> {
-  const observables = tasks.map(t => Observable.defer(t));
-  return Observable.combineLatest(observables);
+/**
+ * Executes an array of observable returning functions parallely.
+ * @param tasks An array of functions to execute parallely
+ */
+export function callp(tasks: ObservableFactory[]): Observable<any> {
+  let deferred: Observable<any>[] = [];
+  for (const task of tasks) {
+    deferred.push(defer(task));
+  }
+  return combineLatest(deferred);
 }

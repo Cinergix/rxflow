@@ -1,9 +1,18 @@
-import { Observable, Subscriber } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 
+/**
+ * A function which checks if 2 items are in correct order
+ */
 export type OrderTest<T> = (a: T, b: T) => boolean;
 
-export function order<T>(test: OrderTest<T>, input: Observable<T>, initial?: T): Observable<T> {
-  return Observable.create((subscriber: Subscriber<T>) => {
+/**
+ * Takes an observable and re-orders emitted data using a order test function.
+ * @param source  The source observable
+ * @param testFn  The function to check if order is correct
+ * @param initial The initial value to test data ordering
+ */
+export function order<T>(source: Observable<T>, testFn: OrderTest<T>, initial?: T): Observable<T> {
+  return Observable.create((observer: Observer<T>) => {
     let queue: T[] = [];
     let prevs: T;
 
@@ -14,7 +23,7 @@ export function order<T>(test: OrderTest<T>, input: Observable<T>, initial?: T):
     function next(value: T) {
       if (prevs === undefined) {
         emit(value);
-      } else if (test(prevs, value)) {
+      } else if (testFn(prevs, value)) {
         emit(value);
         process();
       } else {
@@ -24,14 +33,14 @@ export function order<T>(test: OrderTest<T>, input: Observable<T>, initial?: T):
 
     function emit(value: T) {
       prevs = value;
-      subscriber.next(value);
+      observer.next(value);
     }
 
     function process() {
       while (queue.length) {
         let emitted = false;
         queue.forEach(v => {
-          if (test(prevs, v)) {
+          if (testFn(prevs, v)) {
             emitted = true;
             emit(v);
           }
@@ -43,18 +52,18 @@ export function order<T>(test: OrderTest<T>, input: Observable<T>, initial?: T):
     }
 
     function enqueue(value: T) {
-      let pos = queue.findIndex(v => test(value, v));
+      let pos = queue.findIndex(v => testFn(value, v));
       if (pos === -1) {
-        pos = queue.findIndex(v => test(v, value));
+        pos = queue.findIndex(v => testFn(v, value));
         pos = pos === -1 ? queue.length : pos + 1;
       }
       queue.splice(pos, 0, value);
     }
 
-    const sub = input.subscribe({
+    const sub = source.subscribe({
       next: val => next(val),
-      error: err => subscriber.error(err),
-      complete: () => subscriber.complete(),
+      error: err => observer.error(err),
+      complete: () => observer.complete(),
     });
 
     return () => sub.unsubscribe();
