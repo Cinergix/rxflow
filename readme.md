@@ -1,5 +1,7 @@
 # rxflow
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/creately/rxflow.svg)](https://greenkeeper.io/)
+
 Includes some rxjs operators to control data flow.
 
 ### batch
